@@ -36,6 +36,7 @@ module.exports.get = fastify => ({
 						embedColor: true,
 						embedNotice: true,
 						embedFooter: true,
+						autoCloseMinutes: true,
 						questions: {
 							orderBy: { order: 'asc' },
 							select: {
@@ -139,6 +140,9 @@ module.exports.post = fastify => ({
 		}
 
 		data.channelName ||= 'ticket-{num}'; // not ??=, expect empty string
+		if (data.autoCloseMinutes !== undefined) {
+			data.autoCloseMinutes = (data.autoCloseMinutes === null || data.autoCloseMinutes === '') ? null : Number(data.autoCloseMinutes);
+		}
 
 		const rawQuestions = Array.isArray(data.questions) ? data.questions : [];
 		delete data.questions;

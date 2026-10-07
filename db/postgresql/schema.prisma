@@ -98,6 +98,7 @@ model Category {
     embedColor           String?    @db.VarChar(16)
     embedNotice          String?    @db.Text
     embedFooter          String?    @db.VarChar(255)
+    autoCloseMinutes     Int?
 
     @@map("categories")
 }
@@ -143,6 +144,7 @@ model Guild {
     embedColor           String?    @db.VarChar(16)
     embedNotice          String?    @db.Text
     embedFooter          String?    @db.VarChar(255)
+    autoCloseMinutes     Int?
 
     @@map("guilds")
 }

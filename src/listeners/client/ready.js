@@ -8,6 +8,7 @@ const {
 	sendToHouston,
 } = require('../../lib/stats');
 const handleStaleTickets = require('../../lib/stale');
+const { startAutoCloseWorker } = require('../../services/autoCloseService');
 
 module.exports = class extends Listener {
 	constructor(client, options) {
@@ -146,6 +147,9 @@ module.exports = class extends Listener {
 			checkForUpdates(client);
 			setInterval(() => checkForUpdates(client), ms('1w'));
 		}
+
+		// Start inactivity-based ticket auto-close worker
+		startAutoCloseWorker(client);
 
 		if (process.env.PUBLIC_BOT === 'true') {
 			client.log.notice('Inactivity warnings and auto-close features are disabled');

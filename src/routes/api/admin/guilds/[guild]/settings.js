@@ -19,6 +19,9 @@ module.exports.patch = fastify => ({
 		const data = req.body;
 		if (Object.prototype.hasOwnProperty.call(data, 'id')) delete data.id;
 		if (Object.prototype.hasOwnProperty.call(data, 'createdAt')) delete data.createdAt;
+		if (data.autoCloseMinutes !== undefined) {
+			data.autoCloseMinutes = (data.autoCloseMinutes === null || data.autoCloseMinutes === '') ? null : Number(data.autoCloseMinutes);
+		}
 		const colours = ['errorColour', 'primaryColour', 'successColour'];
 		for (const c of colours) {
 			if (data[c] && !data[c].startsWith('#') && !(data[c] in Colors)) { // if not null/empty and not hex

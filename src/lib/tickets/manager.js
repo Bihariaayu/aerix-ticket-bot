@@ -1304,7 +1304,8 @@ module.exports = class TicketManager {
 
 		if (channel?.deletable) {
 			const member = closedBy ? channel.guild.members.cache.get(closedBy) : null;
-			await channel.delete('Ticket closed' + (member ? ` by ${member.displayName}` : '') + reason ? `: ${reason}` : '');
+			const closeReason = 'Ticket closed' + (member ? ` by ${member.displayName}` : '') + (reason ? `: ${reason}` : '');
+			await channel.delete(closeReason.slice(0, 100));
 		}
 
 		const components = [];

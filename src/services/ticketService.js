@@ -185,6 +185,13 @@ async function closeTicket(client, interaction, ticket) {
 
 	await setTicketState(client, ticket.id, 'Closed');
 
+	if (ticket.categoryId && client.tickets?.$count?.categories?.[ticket.categoryId]) {
+		client.tickets.$count.categories[ticket.categoryId].total = Math.max(0, (client.tickets.$count.categories[ticket.categoryId].total || 1) - 1);
+		if (client.tickets.$count.categories[ticket.categoryId][ticket.createdById]) {
+			client.tickets.$count.categories[ticket.categoryId][ticket.createdById] = Math.max(0, client.tickets.$count.categories[ticket.categoryId][ticket.createdById] - 1);
+		}
+	}
+
 	const notifyEmbed = new EmbedBuilder()
 		.setColor(theme.colors.danger)
 		.setDescription(`Ticket has been closed by ${interaction.user.toString()}.\nThis channel will be deleted in a few moments.`);
@@ -212,6 +219,13 @@ async function deleteTicket(client, interaction, ticket) {
 		},
 		where: { id: ticket.id },
 	});
+
+	if (ticket.categoryId && client.tickets?.$count?.categories?.[ticket.categoryId]) {
+		client.tickets.$count.categories[ticket.categoryId].total = Math.max(0, (client.tickets.$count.categories[ticket.categoryId].total || 1) - 1);
+		if (client.tickets.$count.categories[ticket.categoryId][ticket.createdById]) {
+			client.tickets.$count.categories[ticket.categoryId][ticket.createdById] = Math.max(0, client.tickets.$count.categories[ticket.categoryId][ticket.createdById] - 1);
+		}
+	}
 
 	const notifyEmbed = new EmbedBuilder()
 		.setColor(theme.colors.danger)

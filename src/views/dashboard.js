@@ -531,6 +531,36 @@ module.exports = function renderDashboard(req, res, client) {
             </div>
           </div>
 
+          <!-- Server Default Inactivity Auto-Close -->
+          <div class="space-y-1.5 pt-4 border-t border-slate-800">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+              <span>Default Inactivity Auto-Close Timer</span>
+              <span class="text-[10px] text-brand-400 font-normal">Server Default</span>
+            </label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+              <div class="space-y-1">
+                <select id="guildAutoCloseSelect" onchange="handleGuildAutoCloseChange(this.value)" class="w-full text-xs bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-brand-500 transition">
+                  <option value="">Disabled (Do not auto-close)</option>
+                  <option value="15">15 Minutes</option>
+                  <option value="30">30 Minutes</option>
+                  <option value="60">1 Hour</option>
+                  <option value="120">2 Hours</option>
+                  <option value="240">4 Hours</option>
+                  <option value="480">8 Hours</option>
+                  <option value="720">12 Hours</option>
+                  <option value="1440">24 Hours (1 Day)</option>
+                  <option value="2880">48 Hours (2 Days)</option>
+                  <option value="4320">72 Hours (3 Days)</option>
+                  <option value="custom">Custom Minutes...</option>
+                </select>
+              </div>
+              <div id="guildAutoCloseCustomWrap" class="space-y-1 hidden">
+                <input type="number" id="guildAutoCloseCustomInput" min="1" max="10080" placeholder="e.g. 60" class="w-full text-xs bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white placeholder-slate-600 focus:outline-none focus:border-brand-500 transition">
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-500">Automatically close tickets if no messages are sent for this duration (can be overridden per department).</p>
+          </div>
+
           <div class="pt-4 border-t border-slate-800 space-y-4">
             <h4 class="text-xs font-bold uppercase tracking-wider text-white flex items-center space-x-2">
               <i class="fa-solid fa-sliders text-brand-400"></i>
@@ -1031,6 +1061,40 @@ module.exports = function renderDashboard(req, res, client) {
           </label>
         </div>
 
+        <!-- Inactivity Auto-Close Settings -->
+        <div class="pt-3 border-t border-slate-800 space-y-2">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-hourglass-end text-brand-400 text-sm"></i>
+            <h4 class="text-xs font-bold uppercase tracking-wider text-white">Inactivity Auto-Close</h4>
+            <span class="text-[10px] text-brand-400 font-normal">Department Override</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+            <div class="space-y-1">
+              <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400">Inactivity Threshold</label>
+              <select id="catAutoCloseSelect" onchange="handleCatAutoCloseChange(this.value)" class="w-full text-xs bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-brand-500 transition">
+                <option value="">Inherit Server Default</option>
+                <option value="0">Disabled (Never auto-close)</option>
+                <option value="15">15 Minutes</option>
+                <option value="30">30 Minutes</option>
+                <option value="60">1 Hour</option>
+                <option value="120">2 Hours</option>
+                <option value="240">4 Hours</option>
+                <option value="480">8 Hours</option>
+                <option value="720">12 Hours</option>
+                <option value="1440">24 Hours (1 Day)</option>
+                <option value="2880">48 Hours (2 Days)</option>
+                <option value="4320">72 Hours (3 Days)</option>
+                <option value="custom">Custom Minutes...</option>
+              </select>
+            </div>
+            <div id="catAutoCloseCustomWrap" class="space-y-1 hidden">
+              <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400">Custom Duration (Minutes)</label>
+              <input type="number" id="catAutoCloseCustomInput" min="1" max="10080" placeholder="e.g. 45" class="w-full text-xs bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white placeholder-slate-600 focus:outline-none focus:border-brand-500 transition">
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-500">Automatically close tickets in this department if no messages are sent for this duration.</p>
+        </div>
+
         <!-- Chat Notification Alerts Customization -->
         <div class="pt-4 border-t border-slate-800 space-y-3">
           <div class="flex items-center space-x-2">
@@ -1357,6 +1421,71 @@ module.exports = function renderDashboard(req, res, client) {
         .replace(/'/g, '&#039;');
     }
 
+    function formatMinutesDisplay(mins) {
+      if (mins === null || mins === undefined) return 'Default';
+      if (mins <= 0) return 'Off';
+      if (mins < 60) return mins + 'm';
+      if (mins % 1440 === 0) return (mins / 1440) + 'd';
+      if (mins % 60 === 0) return (mins / 60) + 'h';
+      return Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm';
+    }
+
+    function handleCatAutoCloseChange(val) {
+      const wrap = document.getElementById('catAutoCloseCustomWrap');
+      if (!wrap) return;
+      if (val === 'custom') {
+        wrap.classList.remove('hidden');
+      } else {
+        wrap.classList.add('hidden');
+      }
+    }
+
+    function handleGuildAutoCloseChange(val) {
+      const wrap = document.getElementById('guildAutoCloseCustomWrap');
+      if (!wrap) return;
+      if (val === 'custom') {
+        wrap.classList.remove('hidden');
+      } else {
+        wrap.classList.add('hidden');
+      }
+    }
+
+    function setSelectOrCustom(selectId, wrapId, inputId, value) {
+      const select = document.getElementById(selectId);
+      const wrap = document.getElementById(wrapId);
+      const input = document.getElementById(inputId);
+      if (!select) return;
+
+      const PRESETS = ['0', '15', '30', '60', '120', '240', '480', '720', '1440', '2880', '4320'];
+      if (value === null || value === undefined || value === '') {
+        select.value = '';
+        if (wrap) wrap.classList.add('hidden');
+        if (input) input.value = '';
+      } else if (PRESETS.includes(String(value))) {
+        select.value = String(value);
+        if (wrap) wrap.classList.add('hidden');
+        if (input) input.value = '';
+      } else {
+        select.value = 'custom';
+        if (wrap) wrap.classList.remove('hidden');
+        if (input) input.value = value;
+      }
+    }
+
+    function getSelectOrCustom(selectId, inputId) {
+      const select = document.getElementById(selectId);
+      const input = document.getElementById(inputId);
+      if (!select) return null;
+      if (select.value === 'custom') {
+        const v = parseInt(input?.value, 10);
+        return isNaN(v) || v <= 0 ? null : v;
+      }
+      if (select.value === '' || select.value === null) {
+        return null;
+      }
+      return parseInt(select.value, 10);
+    }
+
     async function openGuildWorkspace(guildId) {
       navigateTo('guild', true);
       const guild = userGuilds.find(g => g.id === guildId) || { id: guildId, name: 'Server ' + guildId, logo: '/favicon.png' };
@@ -1390,6 +1519,7 @@ module.exports = function renderDashboard(req, res, client) {
           if (document.getElementById('guildEmbedTitle')) document.getElementById('guildEmbedTitle').value = setData.embedTitle || '';
           if (document.getElementById('guildEmbedFooter')) document.getElementById('guildEmbedFooter').value = setData.embedFooter || '';
           if (document.getElementById('guildEmbedNotice')) document.getElementById('guildEmbedNotice').value = setData.embedNotice || '';
+          setSelectOrCustom('guildAutoCloseSelect', 'guildAutoCloseCustomWrap', 'guildAutoCloseCustomInput', setData.autoCloseMinutes);
           const embedCard = document.getElementById('previewEmbedCard');
           if (embedCard && setData.primaryColour) {
             embedCard.style.borderLeftColor = setData.primaryColour;
@@ -1511,6 +1641,10 @@ module.exports = function renderDashboard(req, res, client) {
                 \${c.questions && c.questions.length ? \`<span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-brand-950/90 text-brand-300 border border-brand-800/80"><i class="fa-solid fa-list-check mr-1 text-[8px]"></i>\${c.questions.length} Field\${c.questions.length > 1 ? 's' : ''}</span>\` : ''}
                 \${c.claiming ? '<span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-amber-950/80 text-amber-300 border border-amber-800/60">Claiming</span>' : ''}
                 \${c.enableFeedback ? '<span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-purple-950/80 text-purple-300 border border-purple-800/60">Feedback</span>' : ''}
+                \${c.autoCloseMinutes !== null && c.autoCloseMinutes !== undefined ? (
+                  c.autoCloseMinutes === 0 ? '<span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-800 text-slate-400 border border-slate-700">Auto-Close: Off</span>' :
+                  \`<span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-brand-950/90 text-brand-300 border border-brand-800/80"><i class="fa-solid fa-hourglass-end mr-1 text-[8px]"></i>Auto-Close: \${formatMinutesDisplay(c.autoCloseMinutes)}</span>\`
+                ) : ''}
               </div>
             </div>
 
@@ -1836,6 +1970,7 @@ module.exports = function renderDashboard(req, res, client) {
       if (document.getElementById('catEmbedNotice')) document.getElementById('catEmbedNotice').value = '';
       if (document.getElementById('catEmbedFooter')) document.getElementById('catEmbedFooter').value = '';
       if (document.getElementById('catImage')) document.getElementById('catImage').value = '';
+      setSelectOrCustom('catAutoCloseSelect', 'catAutoCloseCustomWrap', 'catAutoCloseCustomInput', null);
       updateCatLiveEmbedPreview();
 
       document.getElementById('btnSaveCategory').innerHTML = '<i class="fa-solid fa-plus"></i><span>Create Department</span>';
@@ -1857,6 +1992,7 @@ module.exports = function renderDashboard(req, res, client) {
       document.getElementById('catOpeningMessage').value = cat.openingMessage || '';
       document.getElementById('catClaiming').checked = !!cat.claiming;
       document.getElementById('catEnableFeedback').checked = !!cat.enableFeedback;
+      setSelectOrCustom('catAutoCloseSelect', 'catAutoCloseCustomWrap', 'catAutoCloseCustomInput', cat.autoCloseMinutes);
       
       const container = document.getElementById('catQuestionsContainer');
       if (container) {
@@ -2014,6 +2150,7 @@ module.exports = function renderDashboard(req, res, client) {
       const embedNotice = document.getElementById('catEmbedNotice')?.value?.trim();
       const embedFooter = document.getElementById('catEmbedFooter')?.value?.trim();
       const image = document.getElementById('catImage')?.value?.trim();
+      const autoCloseMinutes = getSelectOrCustom('catAutoCloseSelect', 'catAutoCloseCustomInput');
 
       const btn = document.getElementById('btnSaveCategory');
       btn.disabled = true;
@@ -2028,6 +2165,7 @@ module.exports = function renderDashboard(req, res, client) {
         enableFeedback,
         staffRoles,
         questions,
+        autoCloseMinutes,
         ticketCreatedMessage: ticketCreatedMessage || null,
         notifyStaffMessage: notifyStaffMessage || null,
         embedTitle: embedTitle || null,
@@ -2406,6 +2544,7 @@ module.exports = function renderDashboard(req, res, client) {
       const embedTitle = document.getElementById('guildEmbedTitle')?.value?.trim() || null;
       const embedFooter = document.getElementById('guildEmbedFooter')?.value?.trim() || null;
       const embedNotice = document.getElementById('guildEmbedNotice')?.value?.trim() || null;
+      const autoCloseMinutes = getSelectOrCustom('guildAutoCloseSelect', 'guildAutoCloseCustomInput');
 
       try {
         const res = await apiFetch(\`/api/admin/guilds/\${guildId}/settings\`, {
@@ -2414,6 +2553,7 @@ module.exports = function renderDashboard(req, res, client) {
           body: JSON.stringify({
             prefix,
             primaryColour: color,
+            autoCloseMinutes,
             ticketCreatedMessage,
             notifyStaffMessage,
             embedTitle,

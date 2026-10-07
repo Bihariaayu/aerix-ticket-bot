@@ -69,6 +69,10 @@ Tickets progress through clean, structured lifecycle states:
   - Customize ticket opening alert (e.g. `{staff} {creator} has opened a new ticket in {department}!`)
   - Customize "Notify Staff" in-channel mention alert
   - Automatic fallback to department staff roles when ping roles are omitted
+- **Configurable Inactivity Auto-Close**:
+  - Automatically close tickets if no messages are sent for a configurable duration (15m, 30m, 1h, 2h, 4h, 8h, 12h, 24h, 48h, 72h, or custom minutes).
+  - Configure globally as server-wide default with individual department overrides or exemptions.
+  - Clean auto-close notification embed sent to channel with grace period before archiving/deletion.
 
 ### 4. Enterprise Administrative Dashboard
 - **Web Address**: Built-in Fastify server running on port `8169`.

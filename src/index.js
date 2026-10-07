@@ -117,6 +117,17 @@ config = client.config;
 log = client.log;
 
 // start the bot and then the web server
-client.login().then(() => {
-	http(client);
-});
+async function startBot() {
+	let loggedIn = false;
+	while (!loggedIn) {
+		try {
+			await client.login();
+			loggedIn = true;
+			http(client);
+		} catch (err) {
+			client.log.error('Login failed, retrying in 5 seconds...', err);
+			await new Promise(resolve => setTimeout(resolve, 5000));
+		}
+	}
+}
+startBot();

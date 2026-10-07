@@ -98,6 +98,7 @@ model Category {
     embedColor           String?
     embedNotice          String?
     embedFooter          String?
+    autoCloseMinutes     Int?
 
     @@map("categories")
 }
@@ -144,6 +145,7 @@ model Guild {
     embedColor           String?
     embedNotice          String?
     embedFooter          String?
+    autoCloseMinutes     Int?
 
     @@map("guilds")
 }
