@@ -1,0 +1,18 @@
+logs:
+  files:
+    directory: ./logs
+    enabled: true
+    keepFor: 30
+  level: info
+presence:
+  activities:
+    - name: t?help | Aerix Tickets
+      type: 0
+    - name: "{openTickets} active tickets"
+      type: 3
+  interval: 15
+  status: online
+stats: false
+templates:
+  transcript: transcript.md
+updates: false
