@@ -531,6 +531,18 @@ module.exports = function renderDashboard(req, res, client) {
             </div>
           </div>
 
+          <!-- Server Audit Log Channel -->
+          <div class="space-y-1.5 pt-4 border-t border-slate-800">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+              <span>Server Audit Log Channel</span>
+              <span class="text-[10px] text-brand-400 font-normal">Audit & Transcripts</span>
+            </label>
+            <select id="guildLogChannelSelect" class="w-full text-xs bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-brand-500 transition font-mono">
+              <option value="">Disabled (Do not log)</option>
+            </select>
+            <p class="text-[11px] text-slate-500">Channel where ticket creations, department transfers, updates, staff notes, closures, and full transcripts are logged.</p>
+          </div>
+
           <!-- Server Default Inactivity Auto-Close -->
           <div class="space-y-1.5 pt-4 border-t border-slate-800">
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center justify-between">
@@ -1001,6 +1013,18 @@ module.exports = function renderDashboard(req, res, client) {
             </div>
             <p class="text-[11px] text-slate-500">Only members with these roles can view, claim, and manage tickets in this department.</p>
           </div>
+        </div>
+
+        <!-- Department Audit Log Channel -->
+        <div class="space-y-1.5 pt-3 border-t border-slate-800">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+            <span>Department Audit Log Channel</span>
+            <span class="text-[10px] text-brand-400 font-normal">Department Override</span>
+          </label>
+          <select id="catLogChannel" class="w-full text-xs bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-brand-500 transition font-mono">
+            <option value="">[Inherit Server Default]</option>
+          </select>
+          <p class="text-[11px] text-slate-500">Channel where events for tickets in this department are logged. Leave empty to use Server Default.</p>
         </div>
 
         <!-- Intake Questions & Form Fields Section -->
@@ -1520,6 +1544,10 @@ module.exports = function renderDashboard(req, res, client) {
           if (document.getElementById('guildEmbedFooter')) document.getElementById('guildEmbedFooter').value = setData.embedFooter || '';
           if (document.getElementById('guildEmbedNotice')) document.getElementById('guildEmbedNotice').value = setData.embedNotice || '';
           setSelectOrCustom('guildAutoCloseSelect', 'guildAutoCloseCustomWrap', 'guildAutoCloseCustomInput', setData.autoCloseMinutes);
+          if (document.getElementById('guildLogChannelSelect')) {
+            document.getElementById('guildLogChannelSelect').dataset.initial = setData.logChannel || '';
+            document.getElementById('guildLogChannelSelect').value = setData.logChannel || '';
+          }
           const embedCard = document.getElementById('previewEmbedCard');
           if (embedCard && setData.primaryColour) {
             embedCard.style.borderLeftColor = setData.primaryColour;
@@ -1837,6 +1865,21 @@ module.exports = function renderDashboard(req, res, client) {
       select.innerHTML = html;
     }
 
+    function populateDepartmentLogChannelsDropdown(selectedLogChannel = '') {
+      const select = document.getElementById('catLogChannel');
+      if (!select) return;
+      const textChannels = currentGuildChannels.filter(c => c.type === 0 || c.type === 5);
+      let html = '<option value="">[Inherit Server Default]</option>';
+      textChannels.forEach(c => {
+        const isSelected = String(c.id) === String(selectedLogChannel);
+        html += \`<option value="\${c.id}" \${isSelected ? 'selected' : ''}>#\${escapeHtml(c.name)}</option>\`;
+      });
+      if (selectedLogChannel && !textChannels.some(c => String(c.id) === String(selectedLogChannel))) {
+        html += \`<option value="\${selectedLogChannel}" selected># Channel ID: \${escapeHtml(selectedLogChannel)}</option>\`;
+      }
+      select.innerHTML = html;
+    }
+
     function renderStaffRolesList(filter = '') {
       const list = document.getElementById('catStaffRolesList');
       if (!list) return;
@@ -1955,6 +1998,7 @@ module.exports = function renderDashboard(req, res, client) {
 
       selectedStaffRoleIds.clear();
       populateDepartmentCategoriesDropdown('');
+      populateDepartmentLogChannelsDropdown('');
       updateStaffRolesUI();
       const searchInput = document.getElementById('catStaffRoleSearch');
       if (searchInput) searchInput.value = '';
@@ -2007,6 +2051,7 @@ module.exports = function renderDashboard(req, res, client) {
       const staffRoles = getArrayRoles(cat.staffRoles);
       staffRoles.forEach(id => selectedStaffRoleIds.add(String(id)));
       populateDepartmentCategoriesDropdown(cat.discordCategory || '');
+      populateDepartmentLogChannelsDropdown(cat.logChannel || '');
       updateStaffRolesUI();
       const searchInput = document.getElementById('catStaffRoleSearch');
       if (searchInput) searchInput.value = '';
@@ -2151,6 +2196,7 @@ module.exports = function renderDashboard(req, res, client) {
       const embedFooter = document.getElementById('catEmbedFooter')?.value?.trim();
       const image = document.getElementById('catImage')?.value?.trim();
       const autoCloseMinutes = getSelectOrCustom('catAutoCloseSelect', 'catAutoCloseCustomInput');
+      const logChannel = document.getElementById('catLogChannel')?.value?.trim() || null;
 
       const btn = document.getElementById('btnSaveCategory');
       btn.disabled = true;
@@ -2166,6 +2212,7 @@ module.exports = function renderDashboard(req, res, client) {
         staffRoles,
         questions,
         autoCloseMinutes,
+        logChannel,
         ticketCreatedMessage: ticketCreatedMessage || null,
         notifyStaffMessage: notifyStaffMessage || null,
         embedTitle: embedTitle || null,
@@ -2282,6 +2329,17 @@ module.exports = function renderDashboard(req, res, client) {
             html += \`<option value="\${c.id}">#\${escapeHtml(c.name)}</option>\`;
           });
           select.innerHTML = html;
+
+          const logSelect = document.getElementById('guildLogChannelSelect');
+          if (logSelect) {
+            const desired = logSelect.dataset.initial || logSelect.value || '';
+            let logHtml = '<option value="">Disabled (Do not log)</option>';
+            textChannels.forEach(c => {
+              logHtml += \`<option value="\${c.id}">#\${escapeHtml(c.name)}</option>\`;
+            });
+            logSelect.innerHTML = logHtml;
+            if (desired) logSelect.value = desired;
+          }
         } else {
           select.innerHTML = '<option value="">[Auto-create: #create-a-ticket]</option>';
         }
@@ -2545,6 +2603,7 @@ module.exports = function renderDashboard(req, res, client) {
       const embedFooter = document.getElementById('guildEmbedFooter')?.value?.trim() || null;
       const embedNotice = document.getElementById('guildEmbedNotice')?.value?.trim() || null;
       const autoCloseMinutes = getSelectOrCustom('guildAutoCloseSelect', 'guildAutoCloseCustomInput');
+      const logChannel = document.getElementById('guildLogChannelSelect')?.value?.trim() || null;
 
       try {
         const res = await apiFetch(\`/api/admin/guilds/\${guildId}/settings\`, {
@@ -2554,6 +2613,7 @@ module.exports = function renderDashboard(req, res, client) {
             prefix,
             primaryColour: color,
             autoCloseMinutes,
+            logChannel,
             ticketCreatedMessage,
             notifyStaffMessage,
             embedTitle,

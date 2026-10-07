@@ -99,6 +99,7 @@ model Category {
     embedNotice          String?
     embedFooter          String?
     autoCloseMinutes     Int?
+    logChannel           String?
 
     @@map("categories")
 }

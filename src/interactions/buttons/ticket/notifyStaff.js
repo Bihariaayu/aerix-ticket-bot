@@ -2,6 +2,7 @@ const { MessageFlags } = require('discord.js');
 const ms = require('ms');
 const { canUserControl } = require('../../../services/permissionService');
 const { getTicket } = require('../../../services/ticketService');
+const { logTicketEvent } = require('../../../lib/logging');
 
 /**
  * Handle Notify Staff button interaction
@@ -77,6 +78,13 @@ async function handle(interaction) {
 
 	await interaction.editReply({
 		content: 'The support team has been notified.',
+	});
+
+	logTicketEvent(client, {
+		action: 'notify_staff',
+		payload: { pings },
+		target: { id: ticket.id, name: interaction.channel.toString() },
+		userId: interaction.user.id,
 	});
 }
 

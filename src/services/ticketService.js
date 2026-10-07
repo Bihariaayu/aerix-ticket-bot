@@ -102,7 +102,7 @@ async function resolveTicket(client, interaction, ticket) {
 	await interaction.channel.send({ embeds: [notifyEmbed] });
 
 	logTicketEvent(client, {
-		action: 'update',
+		action: 'resolve',
 		diff: { status: { from: 'Active', to: 'Resolved' } },
 		target: { id: ticket.id, name: interaction.channel.toString() },
 		userId: interaction.user.id,
@@ -138,7 +138,7 @@ async function archiveTicket(client, interaction, ticket) {
 	await interaction.channel.send({ embeds: [notifyEmbed] });
 
 	logTicketEvent(client, {
-		action: 'update',
+		action: 'archive',
 		diff: { status: { from: 'Resolved', to: 'Archived' } },
 		target: { id: ticket.id, name: interaction.channel.toString() },
 		userId: interaction.user.id,
@@ -173,24 +173,7 @@ async function getInternalNotes(client, ticketId) {
  * Close ticket
  */
 async function closeTicket(client, interaction, ticket) {
-	await client.prisma.ticket.update({
-		data: {
-			open: false,
-			closedAt: new Date(),
-			closedById: interaction.user.id,
-			closedReason: 'Closed by user or staff',
-		},
-		where: { id: ticket.id },
-	});
-
 	await setTicketState(client, ticket.id, 'Closed');
-
-	if (ticket.categoryId && client.tickets?.$count?.categories?.[ticket.categoryId]) {
-		client.tickets.$count.categories[ticket.categoryId].total = Math.max(0, (client.tickets.$count.categories[ticket.categoryId].total || 1) - 1);
-		if (client.tickets.$count.categories[ticket.categoryId][ticket.createdById]) {
-			client.tickets.$count.categories[ticket.categoryId][ticket.createdById] = Math.max(0, client.tickets.$count.categories[ticket.categoryId][ticket.createdById] - 1);
-		}
-	}
 
 	const notifyEmbed = new EmbedBuilder()
 		.setColor(theme.colors.danger)
@@ -200,32 +183,25 @@ async function closeTicket(client, interaction, ticket) {
 
 	setTimeout(async () => {
 		try {
-			await interaction.channel.delete(`Ticket closed by ${interaction.user.tag}`);
-		} catch (_) {}
-	}, 5000);
+			if (client.tickets?.finallyClose) {
+				await client.tickets.finallyClose(ticket.id, {
+					closedBy: interaction.user.id,
+					reason: 'Closed by user or staff',
+				});
+			} else {
+				await interaction.channel.delete(`Ticket closed by ${interaction.user.tag}`);
+			}
+		} catch (err) {
+			client.log?.error?.(`Error in closeTicket: ${err.message}`);
+		}
+	}, 4000);
 }
 
 /**
  * Permanently delete ticket
  */
 async function deleteTicket(client, interaction, ticket) {
-	await client.prisma.ticket.update({
-		data: {
-			open: false,
-			deleted: true,
-			closedAt: new Date(),
-			closedById: interaction.user.id,
-			closedReason: 'Permanently deleted by staff',
-		},
-		where: { id: ticket.id },
-	});
-
-	if (ticket.categoryId && client.tickets?.$count?.categories?.[ticket.categoryId]) {
-		client.tickets.$count.categories[ticket.categoryId].total = Math.max(0, (client.tickets.$count.categories[ticket.categoryId].total || 1) - 1);
-		if (client.tickets.$count.categories[ticket.categoryId][ticket.createdById]) {
-			client.tickets.$count.categories[ticket.categoryId][ticket.createdById] = Math.max(0, client.tickets.$count.categories[ticket.categoryId][ticket.createdById] - 1);
-		}
-	}
+	await setTicketState(client, ticket.id, 'Closed');
 
 	const notifyEmbed = new EmbedBuilder()
 		.setColor(theme.colors.danger)
@@ -235,9 +211,23 @@ async function deleteTicket(client, interaction, ticket) {
 
 	setTimeout(async () => {
 		try {
-			await interaction.channel.delete(`Ticket deleted by ${interaction.user.tag}`);
-		} catch (_) {}
-	}, 3000);
+			await client.prisma.ticket.update({
+				data: { deleted: true },
+				where: { id: ticket.id },
+			}).catch(() => null);
+
+			if (client.tickets?.finallyClose) {
+				await client.tickets.finallyClose(ticket.id, {
+					closedBy: interaction.user.id,
+					reason: 'Permanently deleted by staff',
+				});
+			} else {
+				await interaction.channel.delete(`Ticket deleted by ${interaction.user.tag}`);
+			}
+		} catch (err) {
+			client.log?.error?.(`Error in deleteTicket: ${err.message}`);
+		}
+	}, 2000);
 }
 
 module.exports = {

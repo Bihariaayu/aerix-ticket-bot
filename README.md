@@ -73,6 +73,17 @@ Tickets progress through clean, structured lifecycle states:
   - Automatically close tickets if no messages are sent for a configurable duration (15m, 30m, 1h, 2h, 4h, 8h, 12h, 24h, 48h, 72h, or custom minutes).
   - Configure globally as server-wide default with individual department overrides or exemptions.
   - Clean auto-close notification embed sent to channel with grace period before archiving/deletion.
+- **Dedicated Audit Logging & Automated Transcripts**:
+  - **Server-Wide & Department Logging**: Set a central server audit log channel in Server Settings, or specify individual log channels per department.
+  - **Comprehensive Event Audit**:
+    - **Ticket Created**: Creator (`@user`, ID), timestamp (`<t:time:f>`), category/department, channel mention, intake question responses, and topic.
+    - **Department Transfers**: Who moved the ticket, source department, and destination department.
+    - **Details Updated**: Member answer revisions and topic changes.
+    - **Staff Notes**: Internal staff notes recorded with staff member identity.
+    - **Staff Alerts**: Pings, timestamps, and requestor details.
+    - **Resolutions & Archives**: Resolver identity, timestamps, and status transitions.
+    - **Closures & Deletions**: Creator, closed by (user, staff, or automated inactivity timer), created & closed timestamps, total resolution duration, reason, feedback rating & comment.
+    - **Direct Transcript Attachments**: Automatically generates and attaches the complete Markdown transcript file (`.md`) directly to the close log message alongside a one-click interactive "View Transcript" button.
 
 ### 4. Enterprise Administrative Dashboard
 - **Web Address**: Built-in Fastify server running on port `8169`.

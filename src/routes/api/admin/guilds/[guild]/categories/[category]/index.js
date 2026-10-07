@@ -118,6 +118,7 @@ module.exports.patch = fastify => ({
 			embedNotice: true,
 			embedFooter: true,
 			autoCloseMinutes: true,
+			logChannel: true,
 		};
 
 		const original = req.params.category && await client.prisma.category.findUnique({
@@ -137,6 +138,9 @@ module.exports.patch = fastify => ({
 		}
 		if (data.autoCloseMinutes !== undefined) {
 			updatePayload.autoCloseMinutes = (data.autoCloseMinutes === null || data.autoCloseMinutes === '') ? null : Number(data.autoCloseMinutes);
+		}
+		if (data.logChannel !== undefined) {
+			updatePayload.logChannel = data.logChannel ? String(data.logChannel).trim() : null;
 		}
 		if (data.staffRoles !== undefined) {
 			updatePayload.staffRoles = Array.isArray(data.staffRoles) ? data.staffRoles : [];

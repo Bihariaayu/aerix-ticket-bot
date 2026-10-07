@@ -39,8 +39,9 @@ async function handle(interaction) {
 	});
 
 	logTicketEvent(client, {
-		action: 'update',
-		diff: { note: 'internal note added' },
+		action: 'add_note',
+		diff: { note: noteText },
+		payload: { note: noteText },
 		target: { id: ticket.id, name: interaction.channel.toString() },
 		userId: interaction.user.id,
 	});

@@ -66,8 +66,9 @@ async function handle(interaction) {
 	await interaction.channel.send({ embeds: [transferEmbed] });
 
 	logTicketEvent(client, {
-		action: 'update',
+		action: 'change_department',
 		diff: { category: { from: oldCategoryName, to: newCategory.name } },
+		payload: { fromDepartment: oldCategoryName, toDepartment: newCategory.name },
 		target: { id: ticket.id, name: interaction.channel.toString() },
 		userId: interaction.user.id,
 	});

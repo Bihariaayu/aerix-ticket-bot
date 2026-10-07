@@ -22,6 +22,9 @@ module.exports.patch = fastify => ({
 		if (data.autoCloseMinutes !== undefined) {
 			data.autoCloseMinutes = (data.autoCloseMinutes === null || data.autoCloseMinutes === '') ? null : Number(data.autoCloseMinutes);
 		}
+		if (data.logChannel !== undefined) {
+			data.logChannel = data.logChannel ? String(data.logChannel).trim() : null;
+		}
 		const colours = ['errorColour', 'primaryColour', 'successColour'];
 		for (const c of colours) {
 			if (data[c] && !data[c].startsWith('#') && !(data[c] in Colors)) { // if not null/empty and not hex

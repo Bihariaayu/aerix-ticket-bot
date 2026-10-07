@@ -61,8 +61,8 @@ async function handle(interaction) {
 	});
 
 	logTicketEvent(client, {
-		action: 'update',
-		diff: { details: 'updated via modal' },
+		action: 'update_details',
+		diff: { details: 'Intake answers updated' },
 		target: { id: ticket.id, name: interaction.channel.toString() },
 		userId: interaction.user.id,
 	});
