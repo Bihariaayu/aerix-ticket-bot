@@ -8,7 +8,7 @@ presence:
   activities:
     - name: t?help | Aerix Tickets
       type: 0
-    - name: "{openTickets} active tickets"
+    - name: Managing tickets
       type: 3
   interval: 15
   status: online
